@@ -1,0 +1,11 @@
+Library/
+Temp/
+Builds/
+Obj/
+Download/
+/.vs/
+/*.csproj
+/*.sln
+*.userprefs
+/.idea/
+*.user
