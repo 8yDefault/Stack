@@ -1,9 +1,12 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Stack
 {
     public class StackController : MonoBehaviour
     {
+        public Action<bool> StepPerformed = null;
+
         [Header("Balance")]
         [SerializeField] private float _tileTransition = 1.0f;
         [SerializeField] private float _tileSpeed = 1.0f;
@@ -61,7 +64,7 @@ namespace Stack
             }
 
             MoveTile();
-            LowerStack();
+            //LowerStack();
         }
 
         private void MoveTile()
@@ -97,13 +100,14 @@ namespace Stack
         private bool PlaceTile()
         {
             Transform currentTile = _stackTiles[_stackIndex].transform;
-            Debug.Log("# PlaceTile : " + currentTile.name);
+            Debug.Log("# PlaceTile : " + currentTile.name + " ::: currentTile.pos = " + currentTile.position);
 
             if (_isAlongWithAxisX)
             {
                 float deltaX = _lastTilePosition.x - currentTile.localPosition.x;
                 if (Mathf.Abs(deltaX) > _errorThreshold)
                 {
+                    var cacheBound = _stackBounds.x;
                     _comboIndex = 0;
                     _stackBounds.x -= Mathf.Abs(deltaX);
                     if (_stackBounds.x <= 0)
@@ -111,9 +115,17 @@ namespace Stack
                         return false;
                     }
 
-                    float middlePos = _lastTilePosition.x + currentTile.localPosition.x / 2;
+                    float middlePos = (_lastTilePosition.x + currentTile.localPosition.x) / 2;
                     currentTile.localScale = new Vector3(_stackBounds.x, 1, _stackBounds.y);
-                    currentTile.localPosition = new Vector3(middlePos - (_lastTilePosition.x / 2), _stepIndex, _lastTilePosition.z);
+
+                    // TODO: возможно, здесь бага currentTile.localPosition.x > 0, провести тесты. Повторить в axis Z
+                    //var nextX = currentTile.localPosition.x > 0 ? currentTile.localPosition.x + currentTile.localScale.x / 2 : currentTile.localPosition.x - currentTile.localScale.x / 2;
+                    var nextX = currentTile.localPosition.x > _lastTilePosition.x ? currentTile.localPosition.x + currentTile.localScale.x / 2 : currentTile.localPosition.x - currentTile.localScale.x / 2;
+                    CreateCube(new Vector3(nextX, currentTile.localPosition.y, currentTile.localPosition.z), new Vector3(deltaX, 1, _stackBounds.y));
+
+                    currentTile.localPosition = new Vector3(middlePos, _stepIndex, _lastTilePosition.z);
+                    Debug.Log("# currentTile.localPosition X : " + (middlePos - (_lastTilePosition.x / 2)));
+
                 }
                 else
                 {
@@ -131,19 +143,28 @@ namespace Stack
             }
             else
             {
-                float delta = _lastTilePosition.z - currentTile.localPosition.z;
-                if (Mathf.Abs(delta) > _errorThreshold)
+                float deltaY = _lastTilePosition.z - currentTile.localPosition.z;
+                if (Mathf.Abs(deltaY) > _errorThreshold)
                 {
+                    var cacheBound = _stackBounds.y;
+
                     _comboIndex = 0;
-                    _stackBounds.y -= Mathf.Abs(delta);
+                    _stackBounds.y -= Mathf.Abs(deltaY);
                     if (_stackBounds.y <= 0)
                     {
                         return false;
                     }
 
-                    float middlePos = _lastTilePosition.z + currentTile.localPosition.z / 2;
+                    float middlePos = (_lastTilePosition.z + currentTile.localPosition.z) / 2;
                     currentTile.localScale = new Vector3(_stackBounds.x, 1, _stackBounds.y);
-                    currentTile.localPosition = new Vector3(_lastTilePosition.x, _stepIndex, middlePos - (_lastTilePosition.z / 2));
+
+                    //var nextZ = currentTile.localPosition.z > 0 ? currentTile.localPosition.z + currentTile.localScale.z / 2 : currentTile.localPosition.z - currentTile.localScale.z / 2;
+                    var nextZ = currentTile.localPosition.z > _lastTilePosition.z ? currentTile.localPosition.z + currentTile.localScale.z / 2 : currentTile.localPosition.z - currentTile.localScale.z / 2;
+                    CreateCube(new Vector3(currentTile.localPosition.x, currentTile.localPosition.y, nextZ), new Vector3(_stackBounds.x, 1, deltaY));
+
+                    currentTile.localPosition = new Vector3(_lastTilePosition.x, _stepIndex, middlePos);
+                    Debug.Log("# currentTile.localPosition Z : " + (middlePos - (_lastTilePosition.z / 2)));
+
                 }
                 else
                 {
@@ -163,6 +184,12 @@ namespace Stack
 
             _placedTilePosition = _isAlongWithAxisX ? currentTile.localPosition.x : currentTile.localPosition.z;
             _isAlongWithAxisX = !_isAlongWithAxisX;
+
+            if (StepPerformed != null)
+            {
+                StepPerformed.Invoke(true);
+            }
+
             return true;
         }
 
@@ -174,6 +201,15 @@ namespace Stack
         private void ReserTilePosition()
         {
             _tileTransition = Mathf.PI / 2;
+        }
+
+        public void CreateCube(Vector3 position, Vector3 scale)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+
+            go.transform.position = transform.TransformPoint(position);
+            go.transform.localScale = scale;
+            go.AddComponent<Rigidbody>();
         }
 
         private void GameOver()
