@@ -105,7 +105,12 @@ namespace Stack
                 return;
             }
 
-            if(Input.GetMouseButtonDown(0))
+            if (_isGameOver)
+            {
+                return;
+            }
+
+            if (Input.GetMouseButtonDown(0))
             {
                 if (PlaceTile())
                 {
@@ -122,11 +127,6 @@ namespace Stack
 
         private void MoveTile()
         {
-            if (_isGameOver)
-            {
-                return;
-            }
-
             _tileTransition += Time.deltaTime * _tileSpeed;
             var axisPos = Mathf.Sin(_tileTransition) * _tileSize * _distanceMultiplier;
             var nextPos = _isAlongWithAxisX ? new Vector3(axisPos, _stepIndex, _placedTilePosition) : new Vector3(_placedTilePosition, _stepIndex, axisPos);
