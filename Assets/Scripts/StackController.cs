@@ -78,7 +78,6 @@ namespace Stack
                     var newSingleton = new GameObject();
                     _instance = newSingleton.AddComponent<StackController>();
                 }
-                DontDestroyOnLoad(_instance);
             }
         }
 
@@ -241,10 +240,7 @@ namespace Stack
             _placedTilePosition = _isAlongWithAxisX ? currentTile.localPosition.x : currentTile.localPosition.z;
             _isAlongWithAxisX = !_isAlongWithAxisX;
 
-            if (StepPerformed != null)
-            {
-                StepPerformed.Invoke(true);
-            }
+            StepPerformed?.Invoke(true);
 
             return true;
         }
@@ -303,6 +299,8 @@ namespace Stack
         private void GameOver()
         {
             Debug.LogWarning(this + " : GameOver");
+
+            StepPerformed?.Invoke(false);
 
             _isGameOver = true;
             _stackTiles[_stackIndex].AddComponent<Rigidbody>();
