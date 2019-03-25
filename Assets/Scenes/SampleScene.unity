@@ -233,6 +233,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _gameOverScreen: {fileID: 1537404057}
+  _config: {fileID: 11400000, guid: 0cc8fa84e462aaf468c0fef6775c141c, type: 2}
 --- !u!4 &230568615
 Transform:
   m_ObjectHideFlags: 0

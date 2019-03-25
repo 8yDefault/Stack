@@ -5,9 +5,14 @@ namespace Stack
     public class GameManager : MonoBehaviour
     {
         [SerializeField] private GameObject _gameOverScreen = null;
+        [SerializeField] private GlobalInfo _config = null;
+
+        public static GlobalInfo Config = null;
 
         private void Awake()
         {
+            Config = _config;
+
             ScoreController.InitInstance();
             StackController.Instance.Init();
 

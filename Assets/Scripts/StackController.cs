@@ -37,25 +37,11 @@ namespace Stack
             }
         }
 
-        [Header("Balance")]
-        [SerializeField] private float _tileTransition = 1.0f;
-        [SerializeField] private float _tileSpeed = 1.0f;
-        [SerializeField] private float _distanceMultiplier = 1.0f;
-        [SerializeField] private float _errorThreshold = 0.1f;
-        [SerializeField] private Vector2 _maxStackBounds = Vector2.one;
-        [SerializeField] private float _boundsIncrementBonus = 0.1f;
-        [SerializeField] private int _bonusTriggerCount = 5;
-
-        [Header("View")]
-        [SerializeField] private float _tileSize = 1.0f;
-        [SerializeField] private float _stackMovingSpeed = 1.0f;
-        [SerializeField] private Color32[] _colors = new Color32[4];
-        [SerializeField] private Material _stackMaterial = null;
-
         private GameObject[] _stackTiles = null;
         private Vector2 _stackBounds = Vector2.zero;
         private int _stackAmount = 0;
 
+        private float _tileTransition = 1.0f;
         private int _stepIndex = 0;
         private int _stackIndex = 0;
         private int _comboIndex = 0;
@@ -89,10 +75,10 @@ namespace Stack
             for (int i = 0; i < _stackAmount; i++)
             {
                 _stackTiles[i] = transform.GetChild(i).gameObject;
-                transform.GetChild(i).localScale = new Vector3(_tileSize, 1, _tileSize);
+                transform.GetChild(i).localScale = new Vector3(GameManager.Config.TileSize, 1, GameManager.Config.TileSize);
             }
             _stackIndex = _stackAmount - 1;
-            _stackBounds = new Vector2(_tileSize, _tileSize);
+            _stackBounds = new Vector2(GameManager.Config.TileSize, GameManager.Config.TileSize);
             ReserTilePosition();
 
             _isInited = true;
@@ -127,8 +113,8 @@ namespace Stack
 
         private void MoveTile()
         {
-            _tileTransition += Time.deltaTime * _tileSpeed;
-            var axisPos = Mathf.Sin(_tileTransition) * _tileSize * _distanceMultiplier;
+            _tileTransition += Time.deltaTime * GameManager.Config.TileSpeed;
+            var axisPos = Mathf.Sin(_tileTransition) * GameManager.Config.TileSize * GameManager.Config.DistanceMultiplier;
             var nextPos = _isAlongWithAxisX ? new Vector3(axisPos, _stepIndex, _placedTilePosition) : new Vector3(_placedTilePosition, _stepIndex, axisPos);
 
             _stackTiles[_stackIndex].transform.localPosition = nextPos;
@@ -155,12 +141,11 @@ namespace Stack
         private bool PlaceTile()
         {
             Transform currentTile = _stackTiles[_stackIndex].transform;
-            Debug.Log("# PlaceTile : " + currentTile.name + " ::: currentTile.pos = " + currentTile.position);
 
             if (_isAlongWithAxisX)
             {
                 float deltaX = _lastTilePosition.x - currentTile.localPosition.x;
-                if (Mathf.Abs(deltaX) > _errorThreshold)
+                if (Mathf.Abs(deltaX) > GameManager.Config.ErrorThreshold)
                 {
                     var cacheBound = _stackBounds.x;
                     _comboIndex = 0;
@@ -179,17 +164,16 @@ namespace Stack
                     CreateCube(new Vector3(nextX, currentTile.localPosition.y, currentTile.localPosition.z), new Vector3(deltaX, 1, _stackBounds.y));
 
                     currentTile.localPosition = new Vector3(middlePos, _stepIndex, _lastTilePosition.z);
-                    Debug.Log("# currentTile.localPosition X : " + (middlePos - (_lastTilePosition.x / 2)));
 
                 }
                 else
                 {
-                    if (_comboIndex > _bonusTriggerCount)
+                    if (_comboIndex > GameManager.Config.BonusTriggerCount)
                     {
-                        _stackBounds.x += _boundsIncrementBonus;
-                        if (_stackBounds.x > _maxStackBounds.x)
+                        _stackBounds.x += GameManager.Config.BoundsIncrementBonus;
+                        if (_stackBounds.x > GameManager.Config.MaxStackBounds.x)
                         {
-                            _stackBounds.x = _maxStackBounds.x;
+                            _stackBounds.x = GameManager.Config.MaxStackBounds.x;
                         }
                     }
                     _comboIndex++;
@@ -199,7 +183,7 @@ namespace Stack
             else
             {
                 float deltaY = _lastTilePosition.z - currentTile.localPosition.z;
-                if (Mathf.Abs(deltaY) > _errorThreshold)
+                if (Mathf.Abs(deltaY) > GameManager.Config.ErrorThreshold)
                 {
                     var cacheBound = _stackBounds.y;
 
@@ -218,17 +202,15 @@ namespace Stack
                     CreateCube(new Vector3(currentTile.localPosition.x, currentTile.localPosition.y, nextZ), new Vector3(_stackBounds.x, 1, deltaY));
 
                     currentTile.localPosition = new Vector3(_lastTilePosition.x, _stepIndex, middlePos);
-                    Debug.Log("# currentTile.localPosition Z : " + (middlePos - (_lastTilePosition.z / 2)));
-
                 }
                 else
                 {
-                    if (_comboIndex > _bonusTriggerCount)
+                    if (_comboIndex > GameManager.Config.BonusTriggerCount)
                     {
-                        _stackBounds.y += _boundsIncrementBonus;
-                        if (_stackBounds.y > _maxStackBounds.y)
+                        _stackBounds.y += GameManager.Config.BoundsIncrementBonus;
+                        if (_stackBounds.y > GameManager.Config.MaxStackBounds.y)
                         {
-                            _stackBounds.y = _maxStackBounds.y;
+                            _stackBounds.y = GameManager.Config.MaxStackBounds.y;
                         }
                     }
 
@@ -245,11 +227,6 @@ namespace Stack
             return true;
         }
 
-        private void LowerStack()
-        {
-            transform.position = Vector3.Lerp(transform.position, new Vector3(0, -_stepIndex, 0), _stackMovingSpeed);
-        }
-
         private void ReserTilePosition()
         {
             _tileTransition = Mathf.PI / 2;
@@ -263,7 +240,7 @@ namespace Stack
             go.transform.localScale = scale;
             go.AddComponent<Rigidbody>();
 
-            go.GetComponent<MeshRenderer>().material = _stackMaterial;
+            go.GetComponent<MeshRenderer>().material = GameManager.Config.StackMaterial;
             ColorMesh(go.GetComponent<MeshFilter>().mesh);
         }
 
@@ -275,7 +252,7 @@ namespace Stack
             float f = Mathf.Sin(_stepIndex) * 0.25f;
             for (int i = 0; i < vertices.Length; i++)
             {
-                colors[i] = Lerp4(_colors[0], _colors[1], _colors[2], _colors[3], f);
+                colors[i] = Lerp4(GameManager.Config.Colors[0], GameManager.Config.Colors[1], GameManager.Config.Colors[2], GameManager.Config.Colors[3], f);
             }
             mesh.colors32 = colors;
         }
@@ -298,7 +275,7 @@ namespace Stack
 
         private void GameOver()
         {
-            Debug.LogWarning(this + " : GameOver");
+            Debug.Log(this + " : GameOver");
 
             StepPerformed?.Invoke(false);
 
