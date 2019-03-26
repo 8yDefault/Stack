@@ -10,24 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b37aa4c8d7288854998f0d903ae20a70, type: 3}
-  m_Name: Stack.GlobalInfo
+  m_Name: Stack.Config
   m_EditorClassIdentifier: 
-  _tileTransition: 0
   TileSpeed: 2
+  TileSize: 3.5
   DistanceMultiplier: 1.25
   ErrorThreshold: 0.1
   MaxStackBounds: {x: 3.5, y: 3.5}
-  BoundsIncrementBonus: 0.25
-  BonusTriggerCount: 4
-  TileSize: 3.5
-  StackMovingSpeed: 0.15
-  Colors:
-  - serializedVersion: 2
-    rgba: 4291571144
-  - serializedVersion: 2
-    rgba: 4291571102
-  - serializedVersion: 2
-    rgba: 4291571068
-  - serializedVersion: 2
-    rgba: 4291571000
-  StackMaterial: {fileID: 2100000, guid: d98359f1b755f5749bae078de7e8aded, type: 2}
+  BoundsIncrementBonus: 0.5
+  BonusTriggerCount: 3
