@@ -40,7 +40,7 @@ namespace StackGame
             objectToGet.transform.SetParent(null);
             objectToGet.transform.position = position;
             objectToGet.transform.rotation = Quaternion.identity;
-            objectToGet.transform.localScale = new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+            objectToGet.transform.localScale = scale;
             objectToGet.gameObject.SetActive(true);
             objectToGet.GetComponent<Rigidbody>().isKinematic = false;
 

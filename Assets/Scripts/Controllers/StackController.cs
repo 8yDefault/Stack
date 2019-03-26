@@ -1,13 +1,16 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace StackGame
 {
     public class StackController : MonoBehaviour
     {
+        [SerializeField] private GameObject _tilePrefab = null;
+        [SerializeField] private int _tilesMaxAmount = 64;
+
         private StackModel _model;
-        private GameObject[] _stackTiles = null;
+        private List<GameObject> _stackTiles = null;
         private Vector2 _stackBounds = Vector2.zero;
-        private int _stackAmount = 0;
 
         private float _tileTransition = 1.0f;
         private int _stepIndex = 0;
@@ -18,35 +21,34 @@ namespace StackGame
         private float _placedTilePosition = 0.0f;
         private Vector3 _lastTilePosition = Vector3.zero;
 
-        private bool _isInited = false;
-        private bool _isGameOver = false;
+        private bool _isEnabled = false;
 
         public void Init(StackModel model)
         {
             _model = model;
-            _stackAmount = transform.childCount;
 
-            _stackTiles = new GameObject[_stackAmount];
-            for (int i = 0; i < _stackAmount; i++)
+            // TODO: create external pool or create new tile on demand?
+            _stackTiles = new List<GameObject>(_tilesMaxAmount);
+            for (int i = 0; i < _tilesMaxAmount; i++)
             {
-                _stackTiles[i] = transform.GetChild(i).gameObject;
-                transform.GetChild(i).localScale = new Vector3(_model.Size, 1, _model.Size);
+                var go = Instantiate(_tilePrefab);
+                go.transform.SetParent(this.transform);
+                go.transform.localPosition = Vector3.down * i;
+                go.transform.localScale = new Vector3(_model.Size, 1, _model.Size);
+                _stackTiles.Add(go);
             }
-            _stackIndex = _stackAmount - 1;
+
+            _stepIndex++;
+            _stackIndex = _tilesMaxAmount - 1;
             _stackBounds = new Vector2(_model.Size, _model.Size);
             ResetTilePosition();
 
-            _isInited = true;
+            _isEnabled = true;
         }
 
         private void Update()
         {
-            if (!_isInited)
-            {
-                return;
-            }
-
-            if (_isGameOver)
+            if (!_isEnabled)
             {
                 return;
             }
@@ -61,7 +63,7 @@ namespace StackGame
                 {
                     EventAggregator.StepPerformed?.Invoke(false);
 
-                    _isGameOver = true;
+                    _isEnabled = false;
                     _stackTiles[_stackIndex].AddComponent<Rigidbody>();
                 }
             }
@@ -86,7 +88,8 @@ namespace StackGame
             _stackIndex--;
             if (_stackIndex < 0)
             {
-                _stackIndex = _stackAmount - 1;
+                // TODO: create new tile or reuse existing ones?
+                _stackIndex = _tilesMaxAmount - 1;
             }
 
             _stackTiles[_stackIndex].transform.localPosition = new Vector3(0, _stepIndex, 0);
@@ -100,12 +103,11 @@ namespace StackGame
 
             if (_isAlongWithAxisX)
             {
-                float deltaX = _lastTilePosition.x - currentTile.localPosition.x;
-                if (Mathf.Abs(deltaX) > _model.ErrorThreshold)
+                float delta = Mathf.Abs(_lastTilePosition.x - currentTile.localPosition.x);
+                if (delta > _model.ErrorThreshold)
                 {
-                    var cacheBound = _stackBounds.x;
                     _comboIndex = 0;
-                    _stackBounds.x -= Mathf.Abs(deltaX);
+                    _stackBounds.x -= delta;
                     if (_stackBounds.x <= 0)
                     {
                         return false;
@@ -114,8 +116,8 @@ namespace StackGame
                     float middlePos = (_lastTilePosition.x + currentTile.localPosition.x) / 2;
                     currentTile.localScale = new Vector3(_stackBounds.x, 1, _stackBounds.y);
 
-                    var nextX = currentTile.localPosition.x > _lastTilePosition.x ? currentTile.localPosition.x + currentTile.localScale.x / 2 : currentTile.localPosition.x - currentTile.localScale.x / 2;
-                    EventAggregator.InaccurateStep?.Invoke(new Vector3(nextX, currentTile.localPosition.y, currentTile.localPosition.z), new Vector3(deltaX, 1, _stackBounds.y));
+                    var next = currentTile.localPosition.x > _lastTilePosition.x ? currentTile.localPosition.x + currentTile.localScale.x / 2 : currentTile.localPosition.x - currentTile.localScale.x / 2;
+                    EventAggregator.InaccurateStep?.Invoke(new Vector3(next, currentTile.localPosition.y, currentTile.localPosition.z), new Vector3(delta, 1, _stackBounds.y));
 
                     currentTile.localPosition = new Vector3(middlePos, _stepIndex, _lastTilePosition.z);
                 }
@@ -135,13 +137,11 @@ namespace StackGame
             }
             else
             {
-                float deltaY = _lastTilePosition.z - currentTile.localPosition.z;
-                if (Mathf.Abs(deltaY) > _model.ErrorThreshold)
+                float delta = Mathf.Abs(_lastTilePosition.z - currentTile.localPosition.z);
+                if (delta > _model.ErrorThreshold)
                 {
-                    var cacheBound = _stackBounds.y;
-
                     _comboIndex = 0;
-                    _stackBounds.y -= Mathf.Abs(deltaY);
+                    _stackBounds.y -= delta;
                     if (_stackBounds.y <= 0)
                     {
                         return false;
@@ -150,11 +150,10 @@ namespace StackGame
                     float middlePos = (_lastTilePosition.z + currentTile.localPosition.z) / 2;
                     currentTile.localScale = new Vector3(_stackBounds.x, 1, _stackBounds.y);
 
-                    var nextZ = currentTile.localPosition.z > _lastTilePosition.z ? currentTile.localPosition.z + currentTile.localScale.z / 2 : currentTile.localPosition.z - currentTile.localScale.z / 2;
-                    EventAggregator.InaccurateStep?.Invoke(new Vector3(currentTile.localPosition.x, currentTile.localPosition.y, nextZ), new Vector3(_stackBounds.x, 1, deltaY));
+                    var next = currentTile.localPosition.z > _lastTilePosition.z ? currentTile.localPosition.z + currentTile.localScale.z / 2 : currentTile.localPosition.z - currentTile.localScale.z / 2;
+                    EventAggregator.InaccurateStep?.Invoke(new Vector3(currentTile.localPosition.x, currentTile.localPosition.y, next), new Vector3(_stackBounds.x, 1, delta));
 
                     currentTile.localPosition = new Vector3(_lastTilePosition.x, _stepIndex, middlePos);
-
                 }
                 else
                 {
@@ -166,7 +165,6 @@ namespace StackGame
                             _stackBounds.y = _model.MaxStackBounds.y;
                         }
                     }
-
                     _comboIndex++;
                     currentTile.localPosition = new Vector3(_lastTilePosition.x, _stepIndex, _lastTilePosition.z);
                 }
