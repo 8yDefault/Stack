@@ -3,9 +3,9 @@ using UnityEngine.UI;
 
 namespace StackGame
 {
-    public class GameOverScreen : MonoBehaviour
+    public class GameOverScreen : Screen
     {
-        [Header("View")]
+        [Header("Navigation")]
         [SerializeField] private Button _restartButton = null;
 
         private void OnEnable()

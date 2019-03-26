@@ -5,41 +5,36 @@ namespace StackGame
 {
     public class Pool : APool
     {
-        private Stack<GameObject> _availableObjects = null;
+        private Stack<APooledObject> _availableObjects = null;
 
         private void Awake()
         {
-            var poolObjectsCount = transform.childCount;
-            _availableObjects = new Stack<GameObject>(poolObjectsCount);
+            _availableObjects = new Stack<APooledObject>(_initialAmount);
 
-            for (int i = 0; i < poolObjectsCount; i++)
+            for (int i = 0; i < _initialAmount; i++)
             {
-                var newObject = transform.GetChild(i).gameObject;
-                newObject.transform.SetParent(transform);
-                newObject.gameObject.SetActive(false);
-                newObject.GetComponent<Rigidbody>().isKinematic = true;
-                var pooledObject = newObject.AddComponent<PooledObject>();
+                var pooledObject = Instantiate(_pooledObjectPrefab);
                 pooledObject.Init(this);
-                newObject = pooledObject.gameObject;
-
-                _availableObjects.Push(newObject);
+                pooledObject.transform.SetParent(transform);
+                pooledObject.gameObject.SetActive(false);
+                pooledObject.transform.rotation = Quaternion.identity;
+                pooledObject.GetComponent<Rigidbody>().isKinematic = true;
+                _availableObjects.Push(pooledObject);
             }
         }
 
-        public override GameObject GetObject(Vector3 position = default, Vector3 scale = default)
+        public override APooledObject GetObject(Vector3 position = default, Vector3 scale = default)
         {
-            GameObject objectToGet = default(GameObject);
+            APooledObject objectToGet = default(APooledObject);
             if (_availableObjects.Count > 0)
             {
                 objectToGet = _availableObjects.Pop();
             }
             else
             {
-                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                go.AddComponent<Rigidbody>();
-                var pooledObject = go.AddComponent<PooledObject>();
+                var pooledObject = Instantiate(_pooledObjectPrefab);
                 pooledObject.Init(this);
-                objectToGet = pooledObject.gameObject;
+                objectToGet = pooledObject;
             }
 
             objectToGet.transform.SetParent(null);
@@ -52,7 +47,7 @@ namespace StackGame
             return objectToGet;
         }
 
-        public override void ReturnObject(GameObject objectToReturn)
+        public override void ReturnObject(APooledObject objectToReturn)
         {
             var pooledObject = objectToReturn.GetComponent<PooledObject>();
             if (pooledObject != null)

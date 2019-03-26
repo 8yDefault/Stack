@@ -4,8 +4,6 @@ namespace StackGame
 {
     public class ScoreController : Singleton<ScoreController>
     {
-        public Action<int> ScroreUpdated = null;
-
         private int _score = 0;
 
         protected override void Init()
@@ -29,7 +27,7 @@ namespace StackGame
         {
             _score = 0;
 
-            ScroreUpdated?.Invoke(_score);
+            EventAggregator.ScroreUpdated?.Invoke(_score);
         }
 
         private void OnStepPerformed(bool success)
@@ -39,7 +37,7 @@ namespace StackGame
                 _score++;
             }
 
-            ScroreUpdated?.Invoke(_score);
+            EventAggregator.ScroreUpdated?.Invoke(_score);
         }
     }
 }

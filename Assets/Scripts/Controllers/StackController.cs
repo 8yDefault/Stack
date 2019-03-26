@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace StackGame
 {
@@ -24,9 +23,6 @@ namespace StackGame
 
         public void Init(StackModel model)
         {
-            // TODO: move to level controller
-            EventAggregator.LevelStarted?.Invoke();
-
             _model = model;
             _stackAmount = transform.childCount;
 
@@ -38,7 +34,7 @@ namespace StackGame
             }
             _stackIndex = _stackAmount - 1;
             _stackBounds = new Vector2(_model.Size, _model.Size);
-            ReserTilePosition();
+            ResetTilePosition();
 
             _isInited = true;
         }
@@ -63,7 +59,10 @@ namespace StackGame
                 }
                 else
                 {
-                    GameOver();
+                    EventAggregator.StepPerformed?.Invoke(false);
+
+                    _isGameOver = true;
+                    _stackTiles[_stackIndex].AddComponent<Rigidbody>();
                 }
             }
 
@@ -81,7 +80,7 @@ namespace StackGame
 
         private void SpawnTile()
         {
-            ReserTilePosition();
+            ResetTilePosition();
             _lastTilePosition = _stackTiles[_stackIndex].transform.localPosition;
 
             _stackIndex--;
@@ -181,17 +180,9 @@ namespace StackGame
             return true;
         }
 
-        private void ReserTilePosition()
+        private void ResetTilePosition()
         {
             _tileTransition = Mathf.PI / 2;
-        }
-
-        private void GameOver()
-        {
-            EventAggregator.StepPerformed?.Invoke(false);
-
-            _isGameOver = true;
-            _stackTiles[_stackIndex].AddComponent<Rigidbody>();
         }
     }
 }

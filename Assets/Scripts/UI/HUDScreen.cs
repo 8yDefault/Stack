@@ -3,30 +3,22 @@ using UnityEngine.UI;
 
 namespace StackGame
 {
-    public class HUDScreen : MonoBehaviour
+    public class HUDScreen : Screen
     {
         [Header("View")]
         [SerializeField] private Text _score = null;
 
         private void OnEnable()
         {
-            // TODO: remove logic from View component
-            UpdateScore(0);
-
-            ScoreController.Instance.ScroreUpdated += OnScoreUpdated;
+            EventAggregator.ScroreUpdated += OnScoreUpdated;
         }
 
         private void OnDestroy()
         {
-            ScoreController.Instance.ScroreUpdated -= OnScoreUpdated;
+            EventAggregator.ScroreUpdated -= OnScoreUpdated;
         }
 
         private void OnScoreUpdated(int value)
-        {
-            UpdateScore(value);
-        }
-
-        private void UpdateScore(int value)
         {
             _score.text = value.ToString();
         }
