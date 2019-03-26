@@ -37,6 +37,7 @@ namespace Stack
             }
         }
 
+        private StackModel _model;
         private GameObject[] _stackTiles = null;
         private Vector2 _stackBounds = Vector2.zero;
         private int _stackAmount = 0;
@@ -53,7 +54,6 @@ namespace Stack
         private bool _isInited = false;
         private bool _isGameOver = false;
 
-
         private static void InitInstance()
         {
             if (_instance == null)
@@ -67,18 +67,20 @@ namespace Stack
             }
         }
 
-        public void Init()
+        public void Init(StackModel model)
         {
+            _model = model;
+
             _stackAmount = transform.childCount;
 
             _stackTiles = new GameObject[_stackAmount];
             for (int i = 0; i < _stackAmount; i++)
             {
                 _stackTiles[i] = transform.GetChild(i).gameObject;
-                transform.GetChild(i).localScale = new Vector3(GameManager.Config.TileSize, 1, GameManager.Config.TileSize);
+                transform.GetChild(i).localScale = new Vector3(_model.Size, 1, _model.Size);
             }
             _stackIndex = _stackAmount - 1;
-            _stackBounds = new Vector2(GameManager.Config.TileSize, GameManager.Config.TileSize);
+            _stackBounds = new Vector2(_model.Size, _model.Size);
             ReserTilePosition();
 
             _isInited = true;
@@ -113,8 +115,8 @@ namespace Stack
 
         private void MoveTile()
         {
-            _tileTransition += Time.deltaTime * GameManager.Config.TileSpeed;
-            var axisPos = Mathf.Sin(_tileTransition) * GameManager.Config.TileSize * GameManager.Config.DistanceMultiplier;
+            _tileTransition += Time.deltaTime * _model.Speed;
+            var axisPos = Mathf.Sin(_tileTransition) * _model.Size * _model.DistanceMultiplier;
             var nextPos = _isAlongWithAxisX ? new Vector3(axisPos, _stepIndex, _placedTilePosition) : new Vector3(_placedTilePosition, _stepIndex, axisPos);
 
             _stackTiles[_stackIndex].transform.localPosition = nextPos;
@@ -145,7 +147,7 @@ namespace Stack
             if (_isAlongWithAxisX)
             {
                 float deltaX = _lastTilePosition.x - currentTile.localPosition.x;
-                if (Mathf.Abs(deltaX) > GameManager.Config.ErrorThreshold)
+                if (Mathf.Abs(deltaX) > _model.ErrorThreshold)
                 {
                     var cacheBound = _stackBounds.x;
                     _comboIndex = 0;
@@ -168,12 +170,12 @@ namespace Stack
                 }
                 else
                 {
-                    if (_comboIndex > GameManager.Config.BonusTriggerCount)
+                    if (_comboIndex > _model.BonusTriggerCount)
                     {
-                        _stackBounds.x += GameManager.Config.BoundsIncrementBonus;
-                        if (_stackBounds.x > GameManager.Config.MaxStackBounds.x)
+                        _stackBounds.x += _model.BoundsIncrementBonus;
+                        if (_stackBounds.x > _model.MaxStackBounds.x)
                         {
-                            _stackBounds.x = GameManager.Config.MaxStackBounds.x;
+                            _stackBounds.x = _model.MaxStackBounds.x;
                         }
                     }
                     _comboIndex++;
@@ -183,7 +185,7 @@ namespace Stack
             else
             {
                 float deltaY = _lastTilePosition.z - currentTile.localPosition.z;
-                if (Mathf.Abs(deltaY) > GameManager.Config.ErrorThreshold)
+                if (Mathf.Abs(deltaY) > _model.ErrorThreshold)
                 {
                     var cacheBound = _stackBounds.y;
 
@@ -205,12 +207,12 @@ namespace Stack
                 }
                 else
                 {
-                    if (_comboIndex > GameManager.Config.BonusTriggerCount)
+                    if (_comboIndex > _model.BonusTriggerCount)
                     {
-                        _stackBounds.y += GameManager.Config.BoundsIncrementBonus;
-                        if (_stackBounds.y > GameManager.Config.MaxStackBounds.y)
+                        _stackBounds.y += _model.BoundsIncrementBonus;
+                        if (_stackBounds.y > _model.MaxStackBounds.y)
                         {
-                            _stackBounds.y = GameManager.Config.MaxStackBounds.y;
+                            _stackBounds.y = _model.MaxStackBounds.y;
                         }
                     }
 
@@ -222,7 +224,8 @@ namespace Stack
             _placedTilePosition = _isAlongWithAxisX ? currentTile.localPosition.x : currentTile.localPosition.z;
             _isAlongWithAxisX = !_isAlongWithAxisX;
 
-            StepPerformed?.Invoke(true);
+            //StepPerformed?.Invoke(true);
+            EventAggregator.StepPerformed?.Invoke(true);
 
             return true;
         }
@@ -240,7 +243,7 @@ namespace Stack
             go.transform.localScale = scale;
             go.AddComponent<Rigidbody>();
 
-            go.GetComponent<MeshRenderer>().material = GameManager.Config.StackMaterial;
+            go.GetComponent<MeshRenderer>().material = _model.Material;
             ColorMesh(go.GetComponent<MeshFilter>().mesh);
         }
 
@@ -252,7 +255,7 @@ namespace Stack
             float f = Mathf.Sin(_stepIndex) * 0.25f;
             for (int i = 0; i < vertices.Length; i++)
             {
-                colors[i] = Lerp4(GameManager.Config.Colors[0], GameManager.Config.Colors[1], GameManager.Config.Colors[2], GameManager.Config.Colors[3], f);
+                colors[i] = Lerp4(_model.Colors[0], _model.Colors[1], _model.Colors[2], _model.Colors[3], f);
             }
             mesh.colors32 = colors;
         }
@@ -277,7 +280,8 @@ namespace Stack
         {
             Debug.Log(this + " : GameOver");
 
-            StepPerformed?.Invoke(false);
+            //StepPerformed?.Invoke(false);
+            EventAggregator.StepPerformed?.Invoke(false);
 
             _isGameOver = true;
             _stackTiles[_stackIndex].AddComponent<Rigidbody>();
