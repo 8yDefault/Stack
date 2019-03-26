@@ -1,30 +1,29 @@
 ﻿using UnityEngine;
 
-namespace Stack
+namespace StackGame
 {
     public class GameManager : MonoBehaviour
     {
         [SerializeField] private GameObject _gameOverScreen = null;
         [SerializeField] private GlobalInfo _config = null;
-
-        public static GlobalInfo Config { get; private set; }
+        [SerializeField] private GameObject _stackPrefab = null;
 
         private void Awake()
         {
-            Config = _config;
-
             CreateStack();
 
+            NavigationController.InitInstance();
             ScoreController.InitInstance();
 
-            //StackController.Instance.StepPerformed += OnStepPerformed;
             EventAggregator.StepPerformed += OnStepPerformed;
         }
 
         private void OnDestroy()
         {
-            //StackController.Instance.StepPerformed -= OnStepPerformed;
             EventAggregator.StepPerformed -= OnStepPerformed;
+
+            ScoreController.RemoveInstance();
+            NavigationController.RemoveInstance();
         }
 
         private void Update()
@@ -43,9 +42,12 @@ namespace Stack
         private void CreateStack()
         {
             var stackModel = new StackModel(_config.TileSpeed, _config.TileSize, _config.DistanceMultiplier, _config.ErrorThreshold, _config.MaxStackBounds,
-                _config.BoundsIncrementBonus, _config.BonusTriggerCount, _config.Colors, _config.StackMaterial);
+                _config.BoundsIncrementBonus, _config.BonusTriggerCount);
 
-            StackController.Instance.Init(stackModel);
+            var go = Instantiate(_stackPrefab);
+            go.transform.position = Vector3.zero;
+            var ctrl = go.GetComponent<StackController>();
+            ctrl.Init(stackModel);
         }
     }
 }

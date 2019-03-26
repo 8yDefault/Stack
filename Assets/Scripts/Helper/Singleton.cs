@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Stack
+namespace StackGame
 {
     public class Singleton<T> where T : Singleton<T>, new()
     {
@@ -31,14 +31,6 @@ namespace Stack
             }
         }
 
-        public static T TryInstance
-        {
-            get
-            {
-                return _instance;
-            }
-        }
-
         public static void InitInstance()
         {
             if (_instance == null)
@@ -60,7 +52,6 @@ namespace Stack
                 // Destroy
             }
         }
-
 
         protected virtual void DeInit()
         {

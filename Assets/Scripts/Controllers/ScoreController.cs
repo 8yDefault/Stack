@@ -1,7 +1,6 @@
 ﻿using System;
-using UnityEngine;
 
-namespace Stack
+namespace StackGame
 {
     public class ScoreController : Singleton<ScoreController>
     {
@@ -13,14 +12,24 @@ namespace Stack
         {
             base.Init();
 
-            StackController.Instance.StepPerformed += OnStepPerformed;
+            EventAggregator.LevelStarted += OnLevelStarted;
+            EventAggregator.StepPerformed += OnStepPerformed;
         }
 
         protected override void DeInit()
         {
-            StackController.Instance.StepPerformed -= OnStepPerformed;
+            EventAggregator.LevelStarted -= OnLevelStarted;
+            EventAggregator.StepPerformed -= OnStepPerformed;
+
 
             base.DeInit();
+        }
+
+        private void OnLevelStarted()
+        {
+            _score = 0;
+
+            ScroreUpdated?.Invoke(_score);
         }
 
         private void OnStepPerformed(bool success)

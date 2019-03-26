@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Stack
+namespace StackGame
 {
     public class GlobalInfo : ScriptableObject
     {
@@ -12,9 +12,5 @@ namespace Stack
         public Vector2 MaxStackBounds = Vector2.one;
         public float BoundsIncrementBonus = 0.1f;
         public int BonusTriggerCount = 5;
-
-        [Header("View")]
-        public Color32[] Colors = new Color32[4];
-        public Material StackMaterial = null;
     }
 }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Stack
+namespace StackGame
 {
     public struct StackModel
     {
@@ -12,10 +12,7 @@ namespace Stack
         public float BoundsIncrementBonus { get; private set; }
         public int BonusTriggerCount { get; private set; }
 
-        public Color32[] Colors { get; private set; }
-        public Material Material { get; private set; }
-
-        public StackModel(float speed, float size, float distanceMultiplier, float errorThreshold, Vector2 maxStackBounds, float incrementBonus, int bonusTriggerCount, Color32[] colors, Material material)
+        public StackModel(float speed, float size, float distanceMultiplier, float errorThreshold, Vector2 maxStackBounds, float incrementBonus, int bonusTriggerCount)
         {
             Speed = speed;
             Size = size;
@@ -24,8 +21,6 @@ namespace Stack
             MaxStackBounds = maxStackBounds;
             BoundsIncrementBonus = incrementBonus;
             BonusTriggerCount = bonusTriggerCount;
-            Colors = colors;
-            Material = material;
         }
     }
 }

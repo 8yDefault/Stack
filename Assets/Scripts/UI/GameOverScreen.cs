@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-namespace Stack
+namespace StackGame
 {
     public class GameOverScreen : MonoBehaviour
     {

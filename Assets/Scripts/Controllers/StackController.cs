@@ -1,42 +1,10 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Stack
+namespace StackGame
 {
     public class StackController : MonoBehaviour
     {
-        public Action<bool> StepPerformed = null;
-
-        // TEMP
-        private static StackController _instance = null;
-        public static StackController Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    InitInstance();
-                }
-                return _instance;
-            }
-
-            set
-            {
-                if (value == null)
-                {
-                    if (_instance != null)
-                    {
-                        Debug.Log($"StackController : DeInit.");
-                        _instance = null;
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException("Create your singleton in other way.");
-                }
-            }
-        }
-
         private StackModel _model;
         private GameObject[] _stackTiles = null;
         private Vector2 _stackBounds = Vector2.zero;
@@ -54,23 +22,12 @@ namespace Stack
         private bool _isInited = false;
         private bool _isGameOver = false;
 
-        private static void InitInstance()
-        {
-            if (_instance == null)
-            {
-                _instance = (StackController)FindObjectOfType(typeof(StackController));
-                if (_instance == null)
-                {
-                    var newSingleton = new GameObject();
-                    _instance = newSingleton.AddComponent<StackController>();
-                }
-            }
-        }
-
         public void Init(StackModel model)
         {
-            _model = model;
+            // TODO: move to level controller
+            EventAggregator.LevelStarted?.Invoke();
 
+            _model = model;
             _stackAmount = transform.childCount;
 
             _stackTiles = new GameObject[_stackAmount];
@@ -136,8 +93,6 @@ namespace Stack
             _stackTiles[_stackIndex].transform.localPosition = new Vector3(0, _stepIndex, 0);
             _stackTiles[_stackIndex].transform.localScale = new Vector3(_stackBounds.x, 1, _stackBounds.y);
             _stepIndex++;
-
-            ColorMesh(_stackTiles[_stackIndex].GetComponent<MeshFilter>().mesh);
         }
 
         private bool PlaceTile()
@@ -160,13 +115,10 @@ namespace Stack
                     float middlePos = (_lastTilePosition.x + currentTile.localPosition.x) / 2;
                     currentTile.localScale = new Vector3(_stackBounds.x, 1, _stackBounds.y);
 
-                    // TODO: возможно, здесь бага currentTile.localPosition.x > 0, провести тесты. Повторить в axis Z
-                    //var nextX = currentTile.localPosition.x > 0 ? currentTile.localPosition.x + currentTile.localScale.x / 2 : currentTile.localPosition.x - currentTile.localScale.x / 2;
                     var nextX = currentTile.localPosition.x > _lastTilePosition.x ? currentTile.localPosition.x + currentTile.localScale.x / 2 : currentTile.localPosition.x - currentTile.localScale.x / 2;
-                    CreateCube(new Vector3(nextX, currentTile.localPosition.y, currentTile.localPosition.z), new Vector3(deltaX, 1, _stackBounds.y));
+                    EventAggregator.InaccurateStep?.Invoke(new Vector3(nextX, currentTile.localPosition.y, currentTile.localPosition.z), new Vector3(deltaX, 1, _stackBounds.y));
 
                     currentTile.localPosition = new Vector3(middlePos, _stepIndex, _lastTilePosition.z);
-
                 }
                 else
                 {
@@ -199,11 +151,11 @@ namespace Stack
                     float middlePos = (_lastTilePosition.z + currentTile.localPosition.z) / 2;
                     currentTile.localScale = new Vector3(_stackBounds.x, 1, _stackBounds.y);
 
-                    //var nextZ = currentTile.localPosition.z > 0 ? currentTile.localPosition.z + currentTile.localScale.z / 2 : currentTile.localPosition.z - currentTile.localScale.z / 2;
                     var nextZ = currentTile.localPosition.z > _lastTilePosition.z ? currentTile.localPosition.z + currentTile.localScale.z / 2 : currentTile.localPosition.z - currentTile.localScale.z / 2;
-                    CreateCube(new Vector3(currentTile.localPosition.x, currentTile.localPosition.y, nextZ), new Vector3(_stackBounds.x, 1, deltaY));
+                    EventAggregator.InaccurateStep?.Invoke(new Vector3(currentTile.localPosition.x, currentTile.localPosition.y, nextZ), new Vector3(_stackBounds.x, 1, deltaY));
 
                     currentTile.localPosition = new Vector3(_lastTilePosition.x, _stepIndex, middlePos);
+
                 }
                 else
                 {
@@ -224,7 +176,6 @@ namespace Stack
             _placedTilePosition = _isAlongWithAxisX ? currentTile.localPosition.x : currentTile.localPosition.z;
             _isAlongWithAxisX = !_isAlongWithAxisX;
 
-            //StepPerformed?.Invoke(true);
             EventAggregator.StepPerformed?.Invoke(true);
 
             return true;
@@ -235,52 +186,8 @@ namespace Stack
             _tileTransition = Mathf.PI / 2;
         }
 
-        public void CreateCube(Vector3 position, Vector3 scale)
-        {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-
-            go.transform.position = transform.TransformPoint(position);
-            go.transform.localScale = scale;
-            go.AddComponent<Rigidbody>();
-
-            go.GetComponent<MeshRenderer>().material = _model.Material;
-            ColorMesh(go.GetComponent<MeshFilter>().mesh);
-        }
-
-        private void ColorMesh(Mesh mesh)
-        {
-            var vertices = mesh.vertices;
-            var colors = new Color32[vertices.Length];
-
-            float f = Mathf.Sin(_stepIndex) * 0.25f;
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                colors[i] = Lerp4(_model.Colors[0], _model.Colors[1], _model.Colors[2], _model.Colors[3], f);
-            }
-            mesh.colors32 = colors;
-        }
-
-        private Color32 Lerp4(Color32 a, Color32 b, Color32 c, Color32 d, float time)
-        {
-            if (time < 0.33f)
-            {
-                return Color.Lerp(a, b, time / 0.33f);
-            }
-            else if(time < 0.66f)
-            {
-                return Color.Lerp(b, c, (time - 0.33f) / 0.33f);
-            }
-            else
-            {
-                return Color.Lerp(c, d, (time - 0.66f) / 0.66f);
-            }
-        }
-
         private void GameOver()
         {
-            Debug.Log(this + " : GameOver");
-
-            //StepPerformed?.Invoke(false);
             EventAggregator.StepPerformed?.Invoke(false);
 
             _isGameOver = true;

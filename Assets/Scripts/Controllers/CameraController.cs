@@ -1,27 +1,24 @@
 ﻿using UnityEngine;
 
-namespace Stack
+namespace StackGame
 {
     public class CameraController : MonoBehaviour
     {
-        [Header("Referencies")]
-        [SerializeField] private StackController _stackController = null;
-
         [Header("View")]
         [SerializeField] private float _movingSpeed = 1.0f;
 
         private float _height = 0;
 
-        private void Awake()
+        private void OnEnable()
         {
-            _stackController.StepPerformed += OnStepPerformed;
+            EventAggregator.StepPerformed += OnStepPerformed;
 
             _height = transform.position.y;
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
-            _stackController.StepPerformed -= OnStepPerformed;
+            EventAggregator.StepPerformed -= OnStepPerformed;
         }
 
         private void OnStepPerformed(bool success)

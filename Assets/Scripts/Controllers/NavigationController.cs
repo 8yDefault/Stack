@@ -1,6 +1,6 @@
 ﻿using UnityEngine.SceneManagement;
 
-namespace Stack
+namespace StackGame
 {
     public class NavigationController : Singleton<NavigationController>
     {
